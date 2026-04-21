@@ -21,11 +21,10 @@ import Alert from '@mui/material/Alert';
 import { getAssets, getMyRequests, submitRequest } from '../api';
 import { Asset, AssetRequest } from '../types';
 import { StatusChip } from '../components/StatusChip';
-
-// In a real app this comes from auth context; hardcoded for demo
-const CURRENT_USER_ID = 'replace-with-employee-uuid';
+import { useCurrentUser } from '../context/UserContext';
 
 export function Requests() {
+  const { currentUser } = useCurrentUser();
   const [requests, setRequests] = useState<AssetRequest[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,19 +35,21 @@ export function Requests() {
   const [submitting, setSubmitting] = useState(false);
 
   const load = () => {
-    Promise.all([getMyRequests(CURRENT_USER_ID), getAssets()])
+    if (!currentUser) return;
+    Promise.all([getMyRequests(currentUser.id), getAssets()])
       .then(([r, a]) => { setRequests(r); setAssets(a); })
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(load, [currentUser]);
 
   const handleSubmit = async () => {
     if (!assetId) { setError('Select an asset'); return; }
+    if (!currentUser) return;
     setSubmitting(true);
     setError('');
     try {
-      await submitRequest({ employee_id: CURRENT_USER_ID, asset_id: assetId, reason });
+      await submitRequest({ employee_id: currentUser.id, asset_id: assetId, reason });
       setOpen(false);
       setAssetId('');
       setReason('');

@@ -14,26 +14,25 @@ import Tab from '@mui/material/Tab';
 import { getAllRequests, updateRequest } from '../api';
 import { AssetRequest, RequestStatus } from '../types';
 import { StatusChip } from '../components/StatusChip';
-
-const CURRENT_MANAGER_ID = 'replace-with-manager-uuid';
+import { useCurrentUser } from '../context/UserContext';
 
 const TABS: Array<RequestStatus | 'all'> = ['all', 'pending', 'approved', 'rejected', 'returned'];
 
 export function Approvals() {
+  const { currentUser } = useCurrentUser();
   const [requests, setRequests] = useState<AssetRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<RequestStatus | 'all'>('pending');
 
   const load = () => {
-    getAllRequests()
-      .then(setRequests)
-      .finally(() => setLoading(false));
+    getAllRequests().then(setRequests).finally(() => setLoading(false));
   };
 
   useEffect(load, []);
 
   const act = async (id: string, status: RequestStatus) => {
-    await updateRequest(id, status, CURRENT_MANAGER_ID);
+    if (!currentUser) return;
+    await updateRequest(id, status, currentUser.id);
     load();
   };
 
