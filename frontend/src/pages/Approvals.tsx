@@ -16,6 +16,7 @@ import { AssetRequest, RequestStatus } from '../types';
 import { StatusChip } from '../components/StatusChip';
 import { useCurrentUser } from '../context/UserContext';
 
+
 const TABS: Array<RequestStatus | 'all'> = ['all', 'pending', 'approved', 'rejected', 'returned'];
 
 export function Approvals() {
@@ -42,7 +43,7 @@ export function Approvals() {
 
   return (
     <Box>
-      <Typography variant="h5" mb={2}>Approvals</Typography>
+      <Typography variant="h5" sx={{ mb: 2 }}>Approvals</Typography>
 
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
         {TABS.map((t) => (

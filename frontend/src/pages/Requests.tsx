@@ -65,7 +65,7 @@ export function Requests() {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5">My Requests</Typography>
         <Button variant="contained" onClick={() => setOpen(true)}>New Request</Button>
       </Box>
@@ -101,7 +101,7 @@ export function Requests() {
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Request Asset / Software</DialogTitle>
         <DialogContent>
-          <Box display="flex" flexDirection="column" gap={2} mt={1}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
             <FormControl fullWidth>
               <InputLabel>Asset</InputLabel>

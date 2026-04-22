@@ -136,7 +136,7 @@ export function Inventory() {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5">Inventory</Typography>
         <ButtonGroup>
           <Button variant="outlined" color="error" onClick={() => setConfirmOpen(true)}>
@@ -193,7 +193,7 @@ export function Inventory() {
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Add Asset</DialogTitle>
         <DialogContent>
-          <Box display="flex" flexDirection="column" gap={2} mt={1}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
             <TextField
               label="Asset Name"

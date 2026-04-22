@@ -48,8 +48,8 @@ function Sidebar() {
         '& .MuiDrawer-paper': { width: DRAWER_WIDTH, boxSizing: 'border-box' },
       }}
     >
-      <Box px={2} py={2}>
-        <Typography variant="subtitle1" fontWeight={600}>Asset Manager</Typography>
+      <Box sx={{ px: 2, py: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Asset Manager</Typography>
       </Box>
       <Divider />
       <List dense sx={{ flex: 1 }}>
@@ -66,8 +66,8 @@ function Sidebar() {
         ))}
       </List>
       <Divider />
-      <Box px={2} py={1.5} display="flex" flexDirection="column" gap={1}>
-        <Box display="flex" alignItems="center" gap={1}>
+      <Box sx={{ px: 2, py: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography variant="body2" noWrap>{currentUser.name}</Typography>
           <Chip label={currentUser.role} color={roleColor[currentUser.role]} size="small" />
         </Box>
@@ -99,7 +99,7 @@ function AppRoutes() {
   }
 
   return (
-    <Box display="flex">
+    <Box sx={{ display: 'flex' }}>
       <Sidebar />
       <Box component="main" sx={{ flex: 1, p: 3, ml: `${DRAWER_WIDTH}px` }}>
         <Routes>

@@ -33,9 +33,9 @@ export function Dashboard() {
 
   return (
     <Box>
-      <Typography variant="h5" mb={3}>Dashboard</Typography>
+      <Typography variant="h5" sx={{ mb: 3 }}>Dashboard</Typography>
 
-      <Grid container spacing={2} mb={4}>
+      <Grid container spacing={2} sx={{ mb: 4 }}>
         {[
           { label: 'Total Assets', value: totalAssets },
           { label: 'Available', value: totalAvailable },
@@ -43,8 +43,15 @@ export function Dashboard() {
           { label: 'Pending Requests', value: pending },
           { label: 'Active Allocations', value: approved },
         ].map((stat) => (
-          <Grid item xs={6} sm={4} md={2.4} key={stat.label}>
-            <Card variant="outlined">
+          <Grid
+            key={stat.label}
+            sx={{
+              display: 'flex',
+              width: { xs: '50%', sm: '33.33%', md: '20%' },
+              p: 1,
+            }}
+          >
+            <Card variant="outlined" sx={{ width: '100%' }}>
               <CardContent>
                 <Typography variant="h4">{stat.value}</Typography>
                 <Typography variant="body2" color="text.secondary">{stat.label}</Typography>
@@ -54,7 +61,7 @@ export function Dashboard() {
         ))}
       </Grid>
 
-      <Typography variant="h6" mb={2}>Inventory Overview</Typography>
+      <Typography variant="h6" sx={{ mb: 2 }}>Inventory Overview</Typography>
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -78,7 +85,7 @@ export function Dashboard() {
                 <TableCell>{a.available}</TableCell>
                 <TableCell>{used}</TableCell>
                 <TableCell>
-                  <Box display="flex" alignItems="center" gap={1}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <LinearProgress
                       variant="determinate"
                       value={pct}

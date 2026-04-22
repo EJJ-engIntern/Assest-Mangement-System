@@ -18,10 +18,11 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Chip from '@mui/material/Chip';
+import IconButton from '@mui/material/IconButton';
 import LinearProgress from '@mui/material/LinearProgress';
 import Alert from '@mui/material/Alert';
-import axios from 'axios';
-import { getUsers, createUser } from '../api';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { getUsers, createUser, clearUsers, clearUser } from '../api';
 import { User, Role } from '../types';
 
 const DEPARTMENTS = ['Engineering', 'Marketing', 'Sales', 'HR', 'Finance', 'IT', 'Operations'];
@@ -32,17 +33,17 @@ const roleColor: Record<Role, 'default' | 'primary' | 'secondary'> = {
   admin: 'secondary',
 };
 
-const emptyForm = { name: '', email: '', role: 'employee' as Role, department: '' };
+const emptyForm = { name: '', email: '', role: 'employee' as Role, department: '', password: '' };
 
 export function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [loadingDummy, setLoadingDummy] = useState(false);
-  const [dummyError, setDummyError] = useState('');
+  const [pageError, setPageError] = useState('');
 
   const load = () => {
     getUsers().then(setUsers).finally(() => setLoading(false));
@@ -51,7 +52,7 @@ export function Users() {
   useEffect(load, []);
 
   const handleAdd = async () => {
-    if (!form.name || !form.email || !form.department) {
+    if (!form.name || !form.email || !form.department || !form.password) {
       setError('All fields are required');
       return;
     }
@@ -69,37 +70,22 @@ export function Users() {
     }
   };
 
-  const handleLoadDummy = async () => {
-    setLoadingDummy(true);
-    setDummyError('');
+  const handleDelete = async (id: string) => {
     try {
-      const { data } = await axios.get('https://dummyjson.com/users?limit=10');
-
-      // DummyJSON users have firstName, lastName, email, company.department
-      const toInsert: Omit<User, 'id'>[] = data.users.map((u: any) => ({
-        name: `${u.firstName} ${u.lastName}`,
-        email: u.email,
-        role: 'employee' as Role,
-        department: u.company?.department || 'General',
-      }));
-
-      // Insert sequentially; skip duplicates (backend returns 500 on duplicate email)
-      let added = 0;
-      for (const user of toInsert) {
-        try {
-          await createUser(user);
-          added++;
-        } catch {
-          // silently skip duplicates
-        }
-      }
-
+      await clearUser(id);
       load();
-      if (added === 0) setDummyError('All dummy users already exist.');
-    } catch (e: any) {
-      setDummyError('Failed to fetch dummy users from DummyJSON.');
-    } finally {
-      setLoadingDummy(false);
+    } catch {
+      setPageError('Failed to delete user.');
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await clearUsers();
+      setConfirmClearOpen(false);
+      load();
+    } catch {
+      setPageError('Failed to clear users.');
     }
   };
 
@@ -107,15 +93,11 @@ export function Users() {
 
   return (
     <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5">Users</Typography>
         <ButtonGroup>
-          <Button
-            variant="outlined"
-            onClick={handleLoadDummy}
-            disabled={loadingDummy}
-          >
-            {loadingDummy ? 'Loading...' : 'Load Dummy Users'}
+          <Button variant="outlined" color="error" onClick={() => setConfirmClearOpen(true)}>
+            Clear All
           </Button>
           <Button variant="contained" onClick={() => setOpen(true)}>
             Add User
@@ -123,9 +105,9 @@ export function Users() {
         </ButtonGroup>
       </Box>
 
-      {dummyError && (
-        <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setDummyError('')}>
-          {dummyError}
+      {pageError && (
+        <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setPageError('')}>
+          {pageError}
         </Alert>
       )}
 
@@ -136,13 +118,14 @@ export function Users() {
             <TableCell>Email</TableCell>
             <TableCell>Role</TableCell>
             <TableCell>Department</TableCell>
+            <TableCell align="center">Delete</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {users.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} align="center">
-                No users yet. Add one or load dummy users.
+              <TableCell colSpan={5} align="center">
+                No users yet. Add one to get started.
               </TableCell>
             </TableRow>
           )}
@@ -154,15 +137,21 @@ export function Users() {
                 <Chip label={u.role} color={roleColor[u.role]} size="small" />
               </TableCell>
               <TableCell>{u.department}</TableCell>
+              <TableCell align="center">
+                <IconButton size="small" color="error" onClick={() => handleDelete(u.id)}>
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
 
+      {/* Add User Dialog */}
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>Add User</DialogTitle>
         <DialogContent>
-          <Box display="flex" flexDirection="column" gap={2} mt={1}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
             <TextField
               label="Full Name"
@@ -174,6 +163,12 @@ export function Users() {
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+            <TextField
+              label="Password"
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
             />
             <FormControl fullWidth>
               <InputLabel>Role</InputLabel>
@@ -207,6 +202,20 @@ export function Users() {
           </Button>
           <Button variant="contained" onClick={handleAdd} disabled={submitting}>
             Add
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Clear All Confirm Dialog */}
+      <Dialog open={confirmClearOpen} onClose={() => setConfirmClearOpen(false)}>
+        <DialogTitle>Clear All Users?</DialogTitle>
+        <DialogContent>
+          <Typography>This will permanently delete all users.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmClearOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleClearAll}>
+            Delete All
           </Button>
         </DialogActions>
       </Dialog>

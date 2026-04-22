@@ -1,90 +1,89 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import LinearProgress from '@mui/material/LinearProgress';
-import Chip from '@mui/material/Chip';
-import { getUsers } from '../api';
-import { User, Role } from '../types';
+import Alert from '@mui/material/Alert';
+import { login } from '../api';
 import { useCurrentUser } from '../context/UserContext';
-
-const roleColor: Record<Role, 'default' | 'primary' | 'secondary'> = {
-  employee: 'default',
-  manager: 'primary',
-  admin: 'secondary',
-};
 
 export function Login() {
   const { setCurrentUser } = useCurrentUser();
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedId, setSelectedId] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    getUsers().then(setUsers).finally(() => setLoading(false));
-  }, []);
-
-  const handleLogin = () => {
-    const user = users.find((u) => u.id === selectedId);
-    if (user) setCurrentUser(user);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Email and password are required');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const { user, token } = await login(email, password);
+      setCurrentUser(user, token);
+    } catch (e: any) {
+      setError(e.response?.data?.error || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) return <LinearProgress />;
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleLogin();
+  };
 
   return (
     <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="100vh"
-      bgcolor="grey.50"
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        width: '100vw',
+        bgcolor: 'grey.50',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+      }}
     >
       <Card variant="outlined" sx={{ width: 380 }}>
-        <CardContent>
-          <Typography variant="h6" mb={1}>Asset Manager</Typography>
-          <Typography variant="body2" color="text.secondary" mb={3}>
-            Select your account to continue
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>Asset Manager</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Sign in to your account
           </Typography>
 
-          {users.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No users found. Go to the Users page and add some first.
-            </Typography>
-          ) : (
-            <>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Select User</InputLabel>
-                <Select
-                  value={selectedId}
-                  label="Select User"
-                  onChange={(e) => setSelectedId(e.target.value)}
-                >
-                  {users.map((u) => (
-                    <MenuItem key={u.id} value={u.id}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <span>{u.name}</span>
-                        <Chip label={u.role} color={roleColor[u.role]} size="small" />
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={!selectedId}
-                onClick={handleLogin}
-              >
-                Continue
-              </Button>
-            </>
-          )}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {error && <Alert severity="error">{error}</Alert>}
+            <TextField
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={handleKeyDown}
+              autoFocus
+            />
+            <TextField
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleLogin}
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </Box>
         </CardContent>
       </Card>
     </Box>
