@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../db/supabase';
 
@@ -7,7 +6,7 @@ const router = Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-this-secret-in-production';
 
-// POST /api/auth/login
+// POST /api/auth/login — plain text password comparison
 router.post('/login', async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
@@ -26,11 +25,11 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 
   if (!user.password_hash) {
-    return res.status(401).json({ error: 'This account has no password set. Please contact an admin.' });
+    return res.status(401).json({ error: 'No password set for this account. Contact an admin.' });
   }
 
-  const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) {
+  // Plain text comparison
+  if (password !== user.password_hash) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
 
@@ -40,9 +39,8 @@ router.post('/login', async (req: Request, res: Response) => {
     { expiresIn: '8h' }
   );
 
-  // Return user without password_hash
   const { password_hash, ...safeUser } = user;
   return res.json({ user: safeUser, token });
 });
 
-export default router;
+export default router;  

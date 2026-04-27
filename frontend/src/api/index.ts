@@ -54,8 +54,9 @@ export const clearUser = (id: string) =>
  
 //Login
 
-export const login = (email: string , password: string) =>
-  api.post<{ user: User; token: string }>('/api/login', { email, password }).then((r) => r.data);  
+// export const login = (email: string , password: string) =>
+//   api.post<{ user: User; token: string }>('/api/login', { email, password }).then((r) => r.data);  
 
-  
+export const login = (email: string, password: string) =>
+  api.post<{ user: User; token: string }>('/api/auth/login', { email, password }).then((r) => r.data);
 

@@ -19,13 +19,12 @@ import { Role } from './types';
 
 const DRAWER_WIDTH = 220;
 
-// Define which roles can see each nav item
 const NAV_ITEMS: { label: string; path: string; roles: Role[] }[] = [
-  { label: 'Dashboard',   path: '/',           roles: ['employee', 'manager', 'admin'] },
-  { label: 'My Requests', path: '/requests',   roles: ['employee', 'manager', 'admin'] },
-  { label: 'Approvals',   path: '/approvals',  roles: ['manager', 'admin'] },
-  { label: 'Inventory',   path: '/inventory',  roles: ['manager', 'admin'] },
-  { label: 'Users',       path: '/users',      roles: ['admin'] },
+  { label: 'Dashboard',   path: '/',          roles: ['manager', 'admin'] },
+  { label: 'My Requests', path: '/requests',  roles: ['employee', 'manager', 'admin'] },
+  { label: 'Approvals',   path: '/approvals', roles: ['manager', 'admin'] },
+  { label: 'Inventory',   path: '/inventory', roles: ['manager', 'admin'] },
+  { label: 'Users',       path: '/users',     roles: ['admin'] },
 ];
 
 const roleColor: Record<Role, 'default' | 'primary' | 'secondary'> = {
@@ -33,6 +32,10 @@ const roleColor: Record<Role, 'default' | 'primary' | 'secondary'> = {
   manager: 'primary',
   admin: 'secondary',
 };
+
+function getDefaultPath(role: Role): string {
+  return role === 'employee' ? '/requests' : '/';
+}
 
 function Sidebar() {
   const { currentUser, setCurrentUser } = useCurrentUser();
@@ -79,32 +82,34 @@ function Sidebar() {
   );
 }
 
-// Protects a route — redirects to login if not authenticated or wrong role
 function Guard({ roles, children }: { roles: Role[]; children: JSX.Element }) {
   const { currentUser } = useCurrentUser();
   if (!currentUser) return <Navigate to="/login" replace />;
-  if (!roles.includes(currentUser.role)) return <Navigate to="/" replace />;
+  if (!roles.includes(currentUser.role)) return <Navigate to={getDefaultPath(currentUser.role)} replace />;
   return children;
 }
 
 function AppRoutes() {
   const { currentUser } = useCurrentUser();
 
-  if (!currentUser) {
-    return (
-      <Routes>
-        <Route path="*" element={<Login />} />
-      </Routes>
-    );
-  }
-
   return (
-    <Box sx={{ display: 'flex' }}>
-      <Sidebar />
-      <Box component="main" sx={{ flex: 1, p: 3, ml: `${DRAWER_WIDTH}px` }}>
+    <>
+      {currentUser && <Sidebar />}
+      <Box
+        component="main"
+        sx={{
+          flex: 1,
+          p: currentUser ? 3 : 0,
+          ml: currentUser ? `${DRAWER_WIDTH}px` : 0,
+        }}
+      >
         <Routes>
+          <Route
+            path="/login"
+            element={currentUser ? <Navigate to={getDefaultPath(currentUser.role)} replace /> : <Login />}
+          />
           <Route path="/" element={
-            <Guard roles={['employee', 'manager', 'admin']}><Dashboard /></Guard>
+            <Guard roles={['manager', 'admin']}><Dashboard /></Guard>
           } />
           <Route path="/requests" element={
             <Guard roles={['employee', 'manager', 'admin']}><Requests /></Guard>
@@ -118,10 +123,13 @@ function AppRoutes() {
           <Route path="/users" element={
             <Guard roles={['admin']}><Users /></Guard>
           } />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="*"
+            element={<Navigate to={currentUser ? getDefaultPath(currentUser.role) : '/login'} replace />}
+          />
         </Routes>
       </Box>
-    </Box>
+    </>
   );
 }
 
@@ -129,7 +137,9 @@ export default function App() {
   return (
     <UserProvider>
       <BrowserRouter>
-        <AppRoutes />
+        <Box sx={{ display: 'flex' }}>
+          <AppRoutes />
+        </Box>
       </BrowserRouter>
     </UserProvider>
   );

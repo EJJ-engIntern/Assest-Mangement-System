@@ -1,11 +1,9 @@
 import { Router, Request, Response } from 'express';
-import bcrypt from 'bcrypt';
 import { supabase } from '../db/supabase';
 
 const router = Router();
 
-const SALT_ROUNDS = 10;
-
+// GET /api/users
 router.get('/', async (_req: Request, res: Response) => {
   const { data, error } = await supabase
     .from('users')
@@ -16,7 +14,7 @@ router.get('/', async (_req: Request, res: Response) => {
   return res.json(data);
 });
 
-// POST /api/users — create user with hashed password
+// POST /api/users — store password as plain text in password_hash column
 router.post('/', async (req: Request, res: Response) => {
   const { name, email, role, department, password } = req.body;
 
@@ -24,11 +22,9 @@ router.post('/', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'name, email, and password are required' });
   }
 
-  const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-
   const { data, error } = await supabase
     .from('users')
-    .insert({ name, email, role: role || 'employee', department, password_hash })
+    .insert({ name, email, role: role || 'employee', department, password_hash: password })
     .select('id, name, email, role, department')
     .single();
 
